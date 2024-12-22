@@ -52,11 +52,19 @@ regd_users.post("/login", (req, res) => {
 regd_users.put("/auth/review/:isbn", (req, res) => {
   //Write your code here
   const isbn = req.params.isbn;
-  let username = req.session.authorization['username'];
-  if (username){
-    // res.send(use);
-  } else
-    return res.status(300).json({message: "Session CLosed"});
+  let bookToReview = books[isbn]
+  if (bookToReview) {
+      let review = req.body.review;
+      let reviewer = req.session.authorization['username'];
+      if(review) {
+          bookToReview['reviews'][reviewer] = review;
+          books[isbn] = bookToReview;
+      }
+      res.send(`The review ${JSON.stringify(bookToReview)} for the book with ISBN  ${isbn} has been added/updated.`);
+  }
+  else{
+      res.send("Unable to find this ISBN!");
+  }
 });
 
 module.exports.authenticated = regd_users;
