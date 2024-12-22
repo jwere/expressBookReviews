@@ -1,8 +1,10 @@
 const express = require('express');
+const axios = require('axios');
 let books = require("./booksdb.js");
 let isValid = require("./auth_users.js").isValid;
 let users = require("./auth_users.js").users;
 const public_users = express.Router();
+
 
 
 // Check if a user with the given username already exists
@@ -41,64 +43,83 @@ public_users.post("/register", (req, res) => {
 
 
 // Get the book list available in the shop
-public_users.get('/',function (req, res) {
-  res.send(JSON.stringify(books, null, 4));
-});
+// public_users.get('/',function (req, res) {
+//   res.send(JSON.stringify(books, null, 4));
+// });
+
+public_users.get('/', function (req, res) {
+    const booksPromise = new Promise((resolve, reject) =>{
+      resolve(res.send(JSON.stringify(books, null, 4)))
+    });
+    booksPromise.then(()=>{console.log("All Books Fetched")})
+  });
+  
 
 // Get book details based on ISBN
 public_users.get('/isbn/:isbn',function (req, res) {
-  const book = books[req.params.isbn];
-  if (book){
-    res.send(JSON.stringify(book));
-  }else{
-    return res.status(203).json({message: "Book with ISBN " + req.params.isbn + "Does Not Exist"});
-  }
+    const booksPromise = new Promise((resolve, reject) => {
+        const book = books[req.params.isbn];
+        if (book){
+            resolve(res.send(JSON.stringify(book, null, 4)))
+        }else{
+            reject(res.status(203).json({message: "Book with ISBN " + req.params.isbn + "Does Not Exist"}));
+        }
+    });
+    booksPromise.then(()=>{console.log("Success")}).catch(() => {
+        console.log('Unable to complete request')
+    });
  });
   
 // Get book details based on author
 public_users.get('/author/:author',function (req, res) {
-  const author = req.params.author;
-  
-  let booksByAuthor ={};
-  Object.entries(books).map((entry) => {
-    const key = entry[0];
-    const value = entry[1];
-    if (value.author === author){
-        if (!booksByAuthor[author]){
-            booksByAuthor[author] = [];
+    const booksPromise = new Promise((resolve, reject) =>{
+        const author = req.params.author;
+        let booksByAuthor ={};
+        Object.entries(books).map((entry) => {
+            const key = entry[0];
+            const value = entry[1];
+            if (value.author === author){
+                if (!booksByAuthor[author]){
+                    booksByAuthor[author] = [];
+                }
+                booksByAuthor[author].push(value);
+            }
+        });
+        if (Object.keys(booksByAuthor).length > 0){
+            resolve(res.send(booksByAuthor));
+        }else{
+            reject(res.status(203).json({message: "No Books By Author: " + author}));
         }
-        booksByAuthor[author].push(value);
-    }
-  });
-  
-  if (Object.keys(booksByAuthor).length > 0){
-    res.send(booksByAuthor);
-  }else{
-    res.status(203).json({message: "No Books By Author: " + author});
-  }
+    });
+    booksPromise.then(() =>{ console.log('Request Completed')}).catch(() => {
+        console.log('The mentioned author does not exist')
+    });
 });
 
 // Get all books based on title
 public_users.get('/title/:title',function (req, res) {
-  const title = req.params.title;
-  
-  let booksByTitle = {}
-  Object.entries(books).map((entry) => {
-    const key = entry[0];
-    const value = entry[1];
-    if (value && value.title === title){
-        if (!booksByTitle[title]){
-            booksByTitle[title] = [];
-        }
-      booksByTitle[title].push(value);
+  const booksPromise = new Promise((resolve, reject) =>{
+    const title = req.params.title;
+    let booksByTitle = {}
+    Object.entries(books).map((entry) => {
+      const key = entry[0];
+      const value = entry[1];
+      if (value && value.title === title){
+          if (!booksByTitle[title]){
+              booksByTitle[title] = [];
+          }
+        booksByTitle[title].push(value);
+      }
+    });
+    if (Object.keys(booksByTitle).length >0){
+      resolve(res.send((booksByTitle)));
+    }else{
+      reject(res.status(203).json({message: "No Books With Title: " + title}));
     }
   });
-  
-  if (Object.keys(booksByTitle).length >0){
-    res.send((booksByTitle));
-  }else{
-    res.status(203).json({message: "No Books With Title: " + title});
-  }
+  booksPromise.then(() =>{ console.log('Request Completed')}).catch(() => {
+    console.log('Request Failed');
+  });
 });
 
 //  Get book review
