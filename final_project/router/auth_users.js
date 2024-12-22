@@ -54,7 +54,7 @@ regd_users.put("/auth/review/:isbn", (req, res) => {
   const isbn = req.params.isbn;
   let bookToReview = books[isbn]
   if (bookToReview) {
-      let review = req.body.review;
+      let review = req.query.review;
       let reviewer = req.session.authorization['username'];
       if(review) {
           bookToReview['reviews'][reviewer] = review;
