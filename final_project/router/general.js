@@ -63,12 +63,16 @@ public_users.get('/author/:author',function (req, res) {
   Object.entries(books).map((entry) => {
     const key = entry[0];
     const value = entry[1];
-    if (value && value.author === author)
-      booksByAuthor[key] = value;
+    if (value.author === author){
+        if (!booksByAuthor[author]){
+            booksByAuthor[author] = [];
+        }
+        booksByAuthor[author].push(value);
+    }
   });
   
   if (Object.keys(booksByAuthor).length > 0){
-    res.send(JSON.stringify(booksByAuthor));
+    res.send(booksByAuthor);
   }else{
     res.status(203).json({message: "No Books By Author: " + author});
   }
@@ -82,8 +86,12 @@ public_users.get('/title/:title',function (req, res) {
   Object.entries(books).map((entry) => {
     const key = entry[0];
     const value = entry[1];
-    if (value && value.title === title)
-      booksByTitle[key] = value;
+    if (value && value.title === title){
+        if (!booksByTitle[title]){
+            booksByTitle[title] = [];
+        }
+      booksByTitle[title].push(value);
+    }
   });
   
   if (Object.keys(booksByTitle).length >0){
